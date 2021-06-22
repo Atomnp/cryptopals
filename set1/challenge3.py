@@ -9,6 +9,27 @@ import binascii
 from typing import SupportsComplex
 
 
+def get_english_score(input_bytes):
+    """Compares each input byte to a character frequency
+    chart and returns the score of a message based on the
+    relative frequency the characters occur in the English
+    language.
+    """
+
+    # From https://en.wikipedia.org/wiki/Letter_frequency
+    # with the exception of ' ', which I estimated.
+    character_frequencies = {
+        'a': .08167, 'b': .01492, 'c': .02782, 'd': .04253,
+        'e': .12702, 'f': .02228, 'g': .02015, 'h': .06094,
+        'i': .06094, 'j': .00153, 'k': .00772, 'l': .04025,
+        'm': .02406, 'n': .06749, 'o': .07507, 'p': .01929,
+        'q': .00095, 'r': .05987, 's': .06327, 't': .09056,
+        'u': .02758, 'v': .00978, 'w': .02360, 'x': .00150,
+        'y': .01974, 'z': .00074, ' ': .13000
+    }
+    return sum([character_frequencies.get(chr(byte), 0) for byte in input_bytes.lower()])
+
+
 def get_score_of_text(text):
     # data that represents frequency of english letters in the plaint text
     english_freq = [
@@ -45,31 +66,31 @@ def get_score_of_text(text):
     return measure*others_count*others_count*others_count*others_count
 
 
-def xor_hex_strings(str1, str2):
-    assert len(str1) == len(
-        str2), "Hex string to perform xor should have equal length"
-    res = ""
-    return "".join([hex((int(x, 16) ^ int(y, 16)))[2:] for (x, y) in zip(str1, str2)])
+def xor_hex_strings(input_bytes, char_value):
+    output_bytes = b''
+    for byte in input_bytes:
+        output_bytes += bytes([byte ^ char_value])
+    return output_bytes
 
 
 def decode_single_xor(xs):
-    result = []
-    for i in range(255):
-        a = bytes([i]*int(len(xs)//2))
-        res = xor_hex_strings(a.hex(), xs)
-        # get_score_of_text(res)
-        # print(i)
-        # print((bytes.fromhex(res)))
-        score = get_score_of_text(bytes.fromhex(res))
-        if score != -1:
-            result.append((res, score))
-    result.sort(key=lambda x: x[1])
-    for item in result:
-        print(f'{bytes.fromhex(item[0])}: {item[1]}')
-
-    # print(f' key={i} and {bytes.fromhex(res)}')
+    potential_messages = []
+    for key_value in range(256):
+        message = xor_hex_strings(xs, key_value)
+        score = get_english_score(message)
+        data = {
+            'message': message,
+            'score': score,
+            'key': key_value
+        }
+        potential_messages.append(data)
+    score_sorted_list = sorted(
+        potential_messages, key=lambda x: x['score'], reverse=True)
+    return score_sorted_list[0]
 
 
 if __name__ == "__main__":
-    b = "0e3647e8592d35514a081243582536ed3de6734059001e3f535ce6271032"
-    decode_single_xor(b)
+    # b = "1fee0a3945563d2b5703701817584b5f5b54702522f5031b561929ea2d1e"
+    text = "1b37373331363f78151b7f2b783431333d78397828372d363c78373e783a393b3736"
+    res = decode_single_xor(bytes.fromhex(text))
+    print(res["message"])
