@@ -30,42 +30,6 @@ def get_english_score(input_bytes):
     return sum([character_frequencies.get(chr(byte), 0) for byte in input_bytes.lower()])
 
 
-def get_score_of_text(text):
-    # data that represents frequency of english letters in the plaint text
-    english_freq = [
-        0.08167, 0.01492, 0.02782, 0.04253, 0.12702, 0.02228, 0.02015,
-        0.06094, 0.06966, 0.00153, 0.00772, 0.04025, 0.02406, 0.06749,
-        0.07507, 0.01929, 0.00095, 0.05987, 0.06327, 0.09056, 0.02758,
-        0.00978, 0.02360, 0.00150, 0.01974, 0.00074
-    ]
-    letter_counts = {}
-    others_count = 0
-    for character in text:
-        # if current character is english alphaber
-        if(character >= ord('a') and character <= ord("z") or character >= ord("A") and character <= ord("Z")):
-            if(character >= ord('a')):
-                character -= 32
-            if character not in letter_counts:
-                letter_counts[character] = 0
-            else:
-                letter_counts[character] += 1
-        elif (character >= 32 and character <= 126):
-            others_count += int(1)
-        elif (character == 9 or character == 10 or character == 13):
-            others_count += 1
-        else:
-            return -1  # impossible that given text is a plain english string
-    measure = 0
-    alphabet_length = len(text)-others_count
-    for key in letter_counts:
-        observed_count = letter_counts[key]
-        expected_count = alphabet_length * english_freq[key-ord('A')]
-        difference = observed_count - expected_count
-        measure += difference*difference / expected_count
-
-    return measure*others_count*others_count*others_count*others_count
-
-
 def xor_hex_strings(input_bytes, char_value):
     output_bytes = b''
     for byte in input_bytes:

@@ -44,22 +44,14 @@ def predict_key_size(ciphertext):
     return key_data_sorted[0]["key_size"]
 
 
-def repeating_key_xor(message_bytes, key):
-    """Returns message XOR'd with a key. If the message, is longer
-    than the key, the key will repeat.
-    """
-    output_bytes = b''
-    index = 0
-    for byte in message_bytes:
-        output_bytes += bytes([byte ^ key[index]])
-        if (index + 1) == len(key):
-            index = 0
-        else:
-            index += 1
-    return output_bytes
-
-
 def repeating_xor_bytes_with_key(input_bytes, key_bytes):
+    """ input_bytes: plain text in bytes form
+        key_bytes: key to xor with in bytes form
+
+        returns: bytes that is the result of repeating xor of input bytes with
+        given key
+    """
+
     output_bytes = b""
     complete_key = key_bytes*int(len(input_bytes)/len(key_bytes))
     complete_key += key[:len(input_bytes) % len(key_bytes)]
@@ -108,9 +100,15 @@ if __name__ == "__main__":
     key_size = predict_key_size(ciphertext)
 
     ans = get_chunks(ciphertext, key_size)
+    """ 
+    after getting the chunks we try to determine most probable key for
+    each chunks and combinint most probable key for each chunk gives us the complete
+    key
+     """
     key = b""
     for item in ans:
         key += bytes([decode_single_xor(item)["key"]])
+    """ after gettting the key we xor it with cipher text to get original message """
     out = repeating_xor_bytes_with_key(ciphertext, key)
 
     print("end")
