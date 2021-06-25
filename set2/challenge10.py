@@ -9,8 +9,21 @@ def xor_bytes(a, b):
 
 
 def pad(message_bytes, block_size=16):
-    padding = len(message_bytes) % block_size
+    if(len(message_bytes) % block_size == 0):
+        return message_bytes
+    padding = block_size - len(message_bytes) % block_size
     return message_bytes+bytes([padding]*padding)
+
+
+def unpad(input_bytes):
+    """  for the block size of 16 if the last item is less than 0x15 it is most
+         probably padding byte 
+        """
+    last_item = input_bytes[-1]
+    if last_item <= 0x15:
+        return input_bytes[:-1*last_item]
+    else:
+        return input_bytes
 
 
 def getblocks(message_bytes, block_size):
@@ -30,6 +43,25 @@ def decrypt_block_aes(block, key):
         key), "length of input bytes must equal lenght of key in block aes encryption"
     cipher = AES.new(key, AES.MODE_ECB)
     return cipher.decrypt(block)
+
+
+def ecb_encrypt(message_bytes, key):
+    padded_bytes = pad(message_bytes, block_size=16)
+    blocks = getblocks(padded_bytes, 16)
+    ciphertext = b""
+    for block in blocks:
+        encryped_block = xor_bytes(block, key)
+        ciphertext += encryped_block
+    return ciphertext
+
+
+def ecb_decrypt(message_bytes, key):
+    blocks = getblocks(message_bytes, 16)
+    plaintext = b""
+    for block in blocks:
+        decrypted = xor_bytes(block, key)
+        plaintext += decrypted
+    return unpad(plaintext)
 
 
 def cbc_encrypt(message, key, iv):
